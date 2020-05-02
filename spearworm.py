@@ -5,6 +5,7 @@ import sys
 import os
 import lyricsgenius
 
+
 from datetime import datetime
 
 def connect_to_spotify(username):
