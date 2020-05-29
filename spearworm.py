@@ -1,12 +1,13 @@
 
+import os
+import sqlite3
+import sys
+from datetime import datetime
+
+import lyricsgenius
 import spotipy
 import spotipy.util as util
-import sys
-import os
-import lyricsgenius
 
-
-from datetime import datetime
 
 def connect_to_spotify(username):
     token = util.prompt_for_user_token(username, scope="user-read-recently-played")
@@ -48,8 +49,36 @@ def get_genius_lyrics(recently_played):
         recently_played[count].append(genius_search.lyrics)
     
     return recently_played
-        
 
+def connect_to_db():
+    
+    conn = sqlite3.connect("spearworm.db")
+    
+    return conn, conn.cursor()
+
+def initial_db_setup(cursor):
+
+    # Create table for recently played songs
+    recently_played_table = "CREATE TABLE recently_played(ID INT AUTO_INCREMENT PRIMARY KEY, song_id INT, last_played DATETIME)"
+    cursor.execute(recently_played_table)
+
+    # Create a table for all songs listened to
+    songs_table = "CREATE TABLE songs(ID INT AUTO_INCREMENT PRIMARY KEY, song_name TINYTEXT, artist1_id INT, artist2_id INT, lyrics TEXT, first_played DATETIME)"
+    cursor.execute(songs_table)
+
+    # Create a table for all artists listened to
+    artists_table = "CREATE TABLE artists(ID INT AUTO_INCREMENT PRIMARY KEY, artist_name TINYTEXT, first_played DATETIME)"
+    cursor.execute(artists_table)
+    
+
+def close_db_cursor_and_conn(conn, cursor):
+    cursor.close()
+    conn.close()
+
+def add_recent_to_db(recent_data, cursor):
+    for song in recent_data:
+        #TODO need to check for artist_id, and check for song_id for last_played
+        print("song_name: %s \nartist: %s \nlast_played: %s \nlyrics: %s \n" % (song[0], song[1], song[2], song[3]))
 
 def main():
 
@@ -63,9 +92,23 @@ def main():
     recently_played = get_recently_played(sp)
 
     print("Fetching song lyrics...")
-    recently_played_w_lyrics = get_genius_lyrics(recently_played)
+    recently_played = get_genius_lyrics(recently_played)
 
-    print(recently_played_w_lyrics)
+    print("Connecting to database...")
+    conn, cursor = connect_to_db()
+    check_tables_exist = "SELECT name FROM sqlite_master WHERE type='table';"
+    cursor.execute(check_tables_exist)
+    
+    # Check if tables have already been created
+    if not cursor.fetchall():
+        print("Creating tables in database...")
+        initial_db_setup(cursor)
+    
+    print("Adding recent data to database")
+    add_recent_to_db(recently_played, cursor)
+
+    print("Closing connection to database...")
+    close_db_cursor_and_conn(conn, cursor)
 
 if __name__ == "__main__":
     main()

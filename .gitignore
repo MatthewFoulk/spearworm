@@ -1,3 +1,4 @@
 .vscode
 spearworm_env
 .cache-*
+*.db
