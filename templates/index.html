@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <label for="lyric_search">Lyrics</label>
+    <input type="text" id="lyric_search">
+    <label for="artist_search">Artist</label>
+    <input type="text" id="artist_search">
+    <div id="results"></div>
+</body>
+<script>
+    $(document).keyup(function () {
+        var lyrics = $("#lyric_search").val();
+        console.log(lyrics);
+        var artist = $("#artist_search").val();
+        console.log(artist);
+        $.ajax({
+            url: "/search",
+            type: "GET",
+            data: { lyrics: lyrics, artist: artist },
+            success: function (response) {
+                $("#results").html(response.html);
+            },
+            error: function () {
+                $("#results").html("<p> error </p>");
+            }
+        })
+    });
+</script>
+
+</html>

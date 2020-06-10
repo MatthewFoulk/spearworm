@@ -2,3 +2,5 @@
 spearworm_env
 .cache-*
 *.db
+MyData
+__pycache__
