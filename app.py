@@ -16,6 +16,8 @@ def search():
     # Get the searched lyrics and artist from ajax get request
     lyrics = request.args.get("lyrics")
     artist = request.args.get("artist")
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
 
     # If nothing searched, return blank html
     if not artist and not lyrics:

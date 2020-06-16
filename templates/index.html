@@ -9,20 +9,40 @@
 <body>
     <label for="lyric_search">Lyrics</label>
     <input type="text" id="lyric_search">
+
     <label for="artist_search">Artist</label>
     <input type="text" id="artist_search">
+
+    <label for="start_date"></label>
+    <input type="date" id="start_date" min="2019-05-29">
+
+    <label for="end_date"></label>
+    <input type="date" id="end_date" min="2019-05-29">
+
     <div id="results"></div>
 </body>
 <script>
-    $(document).keyup(function () {
+    $("input").on("change keyup", function () {
         var lyrics = $("#lyric_search").val();
         console.log(lyrics);
+
         var artist = $("#artist_search").val();
         console.log(artist);
+
+        var start_date = $('#start_date').val();
+        console.log(start_date);
+
+        var end_date = $("#end_date").val();
+        console.log(end_date);
+
+        if (end_date < start_date) {
+            alert("Please enter an end date after the start date");
+        }
+
         $.ajax({
             url: "/search",
             type: "GET",
-            data: { lyrics: lyrics, artist: artist },
+            data: { lyrics: lyrics, artist: artist, start_date: start_date, end_date: end_date },
             success: function (response) {
                 $("#results").html(response.html);
             },
@@ -31,6 +51,7 @@
             }
         })
     });
+
 </script>
 
 </html>

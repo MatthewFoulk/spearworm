@@ -21,7 +21,7 @@ def connect_to_spotify(username):
 def get_recently_played(sp):
 
     # Get recernly played songs in JSON format form Spotify
-    recently_played_json = sp.current_user_recently_played(limit=2)
+    recently_played_json = sp.current_user_recently_played()
     # Initialize list for recently played data
     recently_played = []
     
