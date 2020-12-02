@@ -4,3 +4,4 @@ spearworm_env
 *.db
 MyData
 __pycache__
+*.lnk

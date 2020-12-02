@@ -20,7 +20,7 @@ def search():
     end_date = request.args.get("end_date")
 
     # If nothing searched, return blank html
-    if not artist and not lyrics:
+    if not any([lyrics, artist, start_date, end_date]):
         return jsonify({"html": ""})
 
     # Connect to database and get cursor
@@ -38,41 +38,86 @@ def search():
         if len(artist_ids) > 999:
             artist_ids = artist_ids[:998]
 
-    # If artist searched, and no lyrics searched,
+    # If only artist searched,
     # Then select songs based on artists
-    if artist and not lyrics:
-
-        # Add wildcard placeholder for the number of ids in artist_ids
-        song_by_artist_query = (
+    if artist and not any([lyrics, start_date, end_date]):
+        song_query = (
             "SELECT song_name, artist1_id, first_played FROM songs WHERE artist1_id IN ("
             + ",".join("?" * len(artist_ids))
             + ")"
         )
-        cursor.execute(song_by_artist_query, artist_ids)
-        songs = cursor.fetchall()
 
-    # If artist not searched and lyrics searched,
+        song_parameters = artist_ids
+
+    # If only lyrics searched,
     # Then select songs based on lyrics
-    elif not artist and lyrics:
-        song_by_lyrics_query = "SELECT song_name, artist1_id, first_played FROM songs WHERE lyrics LIKE '%' || ? || '%'"
-        cursor.execute(song_by_lyrics_query, (lyrics,))
-        songs = cursor.fetchall()
+    elif lyrics and not any([artist, start_date, end_date]):
+        song_query = """SELECT songs.song_name, artists.artist_name, songs.first_played FROM songs INNER JOIN artists ON songs.artist1_id = artists.ID    
+            WHERE lyrics LIKE '%' || ? || '%'"""
+        song_parameters = (lyrics,)
 
-    elif artist and lyrics:
-        song_by_artist_lyrics_query = (
+    # If only start date set,
+    # Then select all songs
+    elif start_date and not any([artist, lyrics, end_date]):
+        song_query = "SELECT song_name, artist1_id, first_played FROM songs INNER JOIN artists ON songs.artist1_id = artists.ID WHERE first_played > ?"
+        song_parameters = (start_date,)
+
+    # If only end date set,
+    # Then select all songs
+    elif end_date and not any([artist, lyrics, start_date]):
+        song_query = "SELECT song_name, artist1_id, first_played FROM songs WHERE first_played < ?"
+        song_parameters = (end_date,)
+
+    # If both artist and lyrics searched, but no timerange set
+    elif artist and lyrics and not any([start_date, end_date]):
+        song_query = (
             """SELECT song_name, artist1_id, first_played FROM songs WHERE lyrics LIKE '%' || ? || '%'
             AND artist1_id IN ("""
             + ",".join("?" * len(artist_ids))
             + ")"
         )
 
-        query_parameters = [lyrics]
+        song_parameters = [lyrics]
         for i in artist_ids:
-            query_parameters.append(i)
-        query_parameters = tuple(query_parameters)
+            song_parameters.append(i)
+        song_parameters = tuple(song_parameters)
 
-        cursor.execute(song_by_artist_lyrics_query, (query_parameters))
-        songs = cursor.fetchall()
+    # If both artist and start date
+    elif artist and start_date and not any([lyrics, end_date]):
+        song_query = (
+            """SELECT song_name, artist1_id, first_played FROM songs WHERE first_played > ?
+            AND artist1_id IN ("""
+            + ",".join("?" * len(artist_ids))
+            + ")"
+        )
+
+        song_parameters = [start_date]
+        for i in artist_ids:
+            song_parameters.append(i)
+        song_parameters = tuple(song_parameters)
+
+    # If both artist and end date
+    elif artist and end_date and not any([lyrics, start_date]):
+        song_query = (
+            """SELECT song_name, artist1_id, first_played FROM songs WHERE first_played < ?
+            AND artist1_id IN ("""
+            + ",".join("?" * len(artist_ids))
+            + ")"
+        )
+
+        song_parameters = [end_date]
+        for i in artist_ids:
+            song_parameters.append(i)
+        song_parameters = tuple(song_parameters)
+
+    elif lyrics and start_date and not any([artist, end_date]):
+        song_query = """SELECT song_name, artist_id, first_played FROM songs WHERE lyrics LIKE '%' || ? || '%'
+            AND first_played > ?"""
+        song_parameters = (lyrics, start_date)
+
+    # Execute search and get all results
+    cursor.execute(song_query, song_parameters)
+    songs = cursor.fetchall()
 
     # Close database connection and cursor
     database.close_db_cursor_and_conn(conn, cursor)

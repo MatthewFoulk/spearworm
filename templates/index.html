@@ -35,7 +35,11 @@
         var end_date = $("#end_date").val();
         console.log(end_date);
 
-        if (end_date < start_date) {
+        // Verify that end date is after start date
+        // If not, reset the value of the end date
+        if (end_date < start_date && end_date) {
+            $("#end_date").val('')
+            var end_date = $("#end_date").val();
             alert("Please enter an end date after the start date");
         }
 

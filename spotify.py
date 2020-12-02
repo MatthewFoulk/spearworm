@@ -1,4 +1,3 @@
-
 import glob
 import json
 import sys
@@ -12,11 +11,12 @@ import database
 
 def connect_to_spotify(username):
     token = util.prompt_for_user_token(username, scope="user-read-recently-played")
-    
+
     if token:
         return spotipy.Spotify(auth=token)
     else:
         sys.exit("Failed to connect to Spotify")
+
 
 def get_recently_played(sp):
 
@@ -24,9 +24,8 @@ def get_recently_played(sp):
     recently_played_json = sp.current_user_recently_played()
     # Initialize list for recently played data
     recently_played = []
-    
 
-    # Iterate over the recently played tracks and add them to track_dict 
+    # Iterate over the recently played tracks and add them to track_dict
     # then append track to recently played list
     for item in recently_played_json["items"]:
 
@@ -37,7 +36,14 @@ def get_recently_played(sp):
         for artist in item["track"]["artists"]:
             track["artist_names"].append(artist["name"])
 
-        track["played_at"] = datetime.strptime(item["played_at"], '%Y-%m-%dT%H:%M:%S.%fZ')
+        try:
+            track["played_at"] = datetime.strptime(
+                item["played_at"], "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
+        except:
+            track["played_at"] = datetime.strptime(
+                item["played_at"], "%Y-%m-%dT%H:%M:%SZ"
+            )
 
         recently_played.append(track)
 
@@ -46,16 +52,16 @@ def get_recently_played(sp):
 
     return recently_played
 
+
 def get_streaming_history():
 
     # Iterate over each streaminghistory file
     streaming_data = []
     for file_name in glob.glob("MyData/StreamingHistory*.json"):
-        with open(file_name, encoding='utf-8') as f:
+        with open(file_name, encoding="utf-8") as f:
             streaming_data.append(json.load(f))
 
     return streaming_data
-            
 
 
 if __name__ == "__main__":
